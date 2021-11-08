@@ -1,6 +1,6 @@
 ### Hi there 👋
 
-- 🔭 I’m currently working in finance, as backend developer for [Gain.Pro](https://gain/pro).
+- 🔭 I’m currently working in the finance sector, as backend developer for [Gain.Pro](https://gain/pro).
 - 🌱 I’m currently learning how to turn thousands of lines of code into simple database queries and web crawling.
 - 👯 I'm looking to collaborate on open source projects related to blockchain.
 
