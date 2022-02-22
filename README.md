@@ -2,7 +2,7 @@
 
 - 🔭 I’m currently working in the finance sector, as backend developer for [Gain.Pro](https://gain/pro).
 - 🌱 I’m currently learning how to turn thousands of lines of code into simple database queries and web crawling.
-- 👯 I'm looking to collaborate on open source projects related to blockchain.
+- 👯 I'm looking to collaborate on open source projects.
 
 You can find a link to my updated CV [here](https://gist.github.com/noelruault/964d77b87924f8076d04d09b13569e07).
 
