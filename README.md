@@ -1,6 +1,6 @@
 ### Hi there 👋
 
-- 🔭 I am a committed Golang programmer and an enthusiast of simple and efficient programming
+- 🔭 I am a committed Software Engineer and an enthusiast of simple and efficient programming
 - 🏛 Always up for a software design challenge
 - 🌱 Currently learning how to turn thousands of lines of code into simple database queries
 - 🧵 Working on mastering my concurrency skills using green threads and efficient patterns
