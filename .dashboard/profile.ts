@@ -1,0 +1,30 @@
+// Everything specific to one person lives here; components take it as parameters.
+export const profile = {
+  login: "noelruault",
+  // "public" counts only what any visitor could count; "all" adds private repositories, pull requests and contributions.
+  counts: "public" as "public" | "all",
+  name: "Noël Ruault",
+  first: "Noël",
+  last: "Ruault",
+  initials: "N/R",
+  role: "Software engineer",
+  since: "1993",
+  site: { label: "noel.engineer", url: "https://noel.engineer" },
+  cv: { label: "Read my CV", url: "https://gist.github.com/noelruault/964d77b87924f8076d04d09b13569e07" },
+  repos: { label: "See repositories", url: "https://github.com/noelruault?tab=repositories" },
+  tagline: ["Committed software engineer.", "Always up for a challenge."],
+  shout: ["Keep it", "simple.", "Ship it", "fast."],
+  terminal: [
+    ["$", "whoami"],
+    ["", "noelruault"],
+    ["$", "cat now.txt"],
+    ["", "evolving with LLMOps"],
+    ["", "mastering AI"],
+  ] as [string, string][],
+  marquee: ["Evolving with LLMOps", "Mastering AI", "Simple beats clever", "Challenges welcome"],
+  languages: ["Go", "Swift", "TypeScript", "Zig"],
+  motto: ["Simple.", "Efficient.", "Done."],
+  stamp: ["Simple", "beats", "clever"],
+  cta: "Challenges welcome",
+  error: "Over-engineering not found",
+} as const;

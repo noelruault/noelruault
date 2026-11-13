@@ -1,11 +1,7 @@
-### Hi there 👋
+<!-- Generated once a day by .dashboard/build.ts (docs dashboard today). Edit the generator, not this file. -->
 
-- 🔭 I am a committed Software Engineer and an enthusiast of simple and efficient programming
-- 🏛 Always up for a software design challenge
-- 🌱 Evolving with LLMOps: I build the agent tooling that AI products later ship as features
-- 🧵 Running my engineering through agents I design, review and keep improving
+<p><a href="https://noel.engineer"><img src="cards/docs-nav.svg" width="100%" alt="Noël Ruault, software engineer. Since 1993. noel.engineer"></a></p>
 
-You can find a link to my updated CV [here](https://gist.github.com/noelruault/964d77b87924f8076d04d09b13569e07).
+<p><img src="cards/docs-main.svg" width="100%" alt="Keep it simple. Ship it fast. Committed software engineer. Always up for a challenge. 799 contributions in the last year, 13 years on GitHub, 35 repositories, 11 pull requests, 17 stars, 29 followers."></p>
 
-<img src="https://raw.githubusercontent.com/noelruault/noelruault/main/profile-summary-card-output/dracula/1-repos-per-language.svg" height="150"><img src="https://raw.githubusercontent.com/noelruault/noelruault/main/profile-summary-card-output/dracula/0-profile-details.svg" width="525">
-
+<p><a href="https://gist.github.com/noelruault/964d77b87924f8076d04d09b13569e07"><img src="cards/button-cv.svg" height="46" alt="Read my CV"></a>&nbsp;&nbsp;<a href="https://github.com/noelruault?tab=repositories"><img src="cards/button-repos.svg" height="46" alt="See repositories"></a></p>
