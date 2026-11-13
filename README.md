@@ -2,8 +2,8 @@
 
 - 🔭 I am a committed Software Engineer and an enthusiast of simple and efficient programming
 - 🏛 Always up for a software design challenge
-- 🌱 Currently learning LLMOps
-- 🧵 Working on mastering AI
+- 🌱 Evolving with LLMOps: I build the agent tooling that AI products later ship as features
+- 🧵 Running my engineering through agents I design, review and keep improving
 
 You can find a link to my updated CV [here](https://gist.github.com/noelruault/964d77b87924f8076d04d09b13569e07).
 
