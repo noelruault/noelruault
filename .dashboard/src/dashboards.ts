@@ -19,6 +19,42 @@ export interface Stats {
   pullRequests: number;
   stars: number;
   followers: number;
+  activeDays: number;
+  currentStreak: number;
+  longestStreak: number;
+  bestDay: number;
+  dailyAverage: number;
+}
+
+export type StatKey = Exclude<keyof Stats, "stars" | "followers">;
+
+interface StatView {
+  // Two short lines under a tile's number.
+  tile: readonly string[];
+  // One line beside a pill's number.
+  pill: string;
+  // How the number reads in alt text, after the value.
+  phrase: string;
+}
+
+// Every stat a tile or pill can show; `profile.stats` picks four of them, in order.
+export const STAT: Record<StatKey, StatView> = {
+  contributions: { tile: ["Contributions,", "last year"], pill: "Contributions", phrase: "contributions in the last year" },
+  years: { tile: ["Years on", "GitHub"], pill: "Years on GitHub", phrase: "years on GitHub" },
+  activeDays: { tile: ["Active days,", "last year"], pill: "Active days", phrase: "active days in the last year" },
+  currentStreak: { tile: ["Days in a row,", "right now"], pill: "Day streak now", phrase: "days in a row right now" },
+  longestStreak: { tile: ["Longest streak,", "in days"], pill: "Longest streak", phrase: "days in the longest streak" },
+  bestDay: { tile: ["Contributions,", "best day"], pill: "On the best day", phrase: "contributions on the best day" },
+  dailyAverage: { tile: ["Contributions", "a day"], pill: "A day, average", phrase: "contributions a day on average" },
+  repos: { tile: ["Repositories"], pill: "Repositories", phrase: "repositories" },
+  pullRequests: { tile: ["Pull requests"], pill: "Pull requests", phrase: "pull requests" },
+};
+
+// The tile row and the pill row are both laid out for four.
+const SLOTS = 4;
+function four(keys: readonly StatKey[]) {
+  if (keys.length !== SLOTS) throw new Error(`a dashboard shows exactly ${SLOTS} stats, got ${keys.length}: ${keys.join(", ")}`);
+  return keys;
 }
 
 export interface Card {
@@ -38,8 +74,12 @@ export interface Dashboard {
 const fmt = (v: number) => v.toLocaleString("en-US");
 const sheet = { w: PAGE_W, pad: PAD, shadowMax: SHADOW_MAX };
 
-const summary = (s: Stats) =>
-  `${fmt(s.contributions)} contributions in the last year, ${s.years} years on GitHub, ${fmt(s.repos)} repositories, ${fmt(s.pullRequests)} pull requests, ${fmt(s.stars)} stars, ${fmt(s.followers)} followers.`;
+const summary = (s: Stats, keys: readonly StatKey[]) =>
+  `${keys.map((key) => `${fmt(s[key])} ${STAT[key].phrase}`).join(", ")}, ${fmt(s.stars)} stars, ${fmt(s.followers)} followers.`;
+
+const TILE_FILLS = [c.yellow, c.mint, c.pink, c.violet];
+const PILL_FILLS = [c.orange, c.blue, c.pink, c.yellow];
+const PILL_ICONS = [globe, (x: number, y: number, size: number) => sparkle(x + size / 2, y + size / 2, size, c.yellow), globe, check];
 
 function buttons(): Card[] {
   // Small enough that both buttons share one row on a 390px phone.
@@ -55,7 +95,8 @@ function sideBySide(left: Piece, right: Piece, x: number): Piece {
   return { w: CONTENT_W, h, svg: at(0, (h - left.h) / 2, left.svg) + at(x, (h - right.h) / 2, right.svg) };
 }
 
-export function docs(s: Stats): Dashboard {
+export function docs(s: Stats, keys: readonly StatKey[] = profile.stats): Dashboard {
+  four(keys);
   const navAlt = `${profile.name}, ${profile.role.toLowerCase()}. Since ${profile.since}. ${profile.site.label}`;
   const stat = bubbles.render([
     { icon: heart, value: fmt(s.stars), label: "Stars" },
@@ -64,12 +105,7 @@ export function docs(s: Stats): Dashboard {
   const gap = 26;
   const main = [
     hero.render({ role: profile.role, shout: profile.shout, tagline: profile.tagline, tag: profile.languages[0], terminal: profile.terminal }),
-    tiles.render([
-      { value: fmt(s.contributions), label: ["Contributions,", "last year"], fill: c.yellow },
-      { value: String(s.years), label: ["Years on", "GitHub"], fill: c.mint },
-      { value: fmt(s.repos), label: ["Repositories"], fill: c.pink },
-      { value: fmt(s.pullRequests), label: ["Pull requests"], fill: c.violet },
-    ]),
+    tiles.render(keys.map((key, i) => ({ value: fmt(s[key]), label: STAT[key].tile, fill: TILE_FILLS[i] }))),
     sideBySide(stat, dialog.render({ title: "Error", message: profile.error, button: "OK", w: CONTENT_W - stat.w - gap }), stat.w + gap),
     marquee.render(profile.marquee, "docs"),
   ];
@@ -77,15 +113,16 @@ export function docs(s: Stats): Dashboard {
     id: "docs",
     rows: [
       [{ file: "docs-nav.svg", svg: page("docs-nav", navAlt, [nav.render({ name: profile.name, initials: profile.initials, role: profile.role, since: profile.since, site: profile.site.label })], sheet), alt: navAlt, href: profile.site.url }],
-      [{ file: "docs-main.svg", svg: page("docs-main", `${profile.shout.join(" ")} ${profile.tagline.join(" ")} ${summary(s)}`, main, { ...sheet, gap }), alt: `${profile.shout.join(" ")} ${profile.tagline.join(" ")} ${summary(s)}` }],
+      [{ file: "docs-main.svg", svg: page("docs-main", `${profile.shout.join(" ")} ${profile.tagline.join(" ")} ${summary(s, keys)}`, main, { ...sheet, gap }), alt: `${profile.shout.join(" ")} ${profile.tagline.join(" ")} ${summary(s, keys)}` }],
       buttons(),
     ],
   };
 }
 
-export function posterBoard(s: Stats): Dashboard {
+export function posterBoard(s: Stats, keys: readonly StatKey[] = profile.stats): Dashboard {
+  four(keys);
   const navAlt = `${profile.languages.join(", ")}. Contact: ${profile.site.label}`;
-  const mainAlt = `${profile.name}. ${profile.motto.join(" ")} ${profile.tagline.join(" ")} ${summary(s)}`;
+  const mainAlt = `${profile.name}. ${profile.motto.join(" ")} ${profile.tagline.join(" ")} ${summary(s, keys)}`;
   const main = [
     poster.render({
       first: profile.first,
@@ -95,12 +132,7 @@ export function posterBoard(s: Stats): Dashboard {
       tagline: profile.tagline.join(" "),
       cta: profile.cta,
       since: profile.since,
-      pills: [
-        { icon: globe, value: String(s.years), label: "Years on GitHub", fill: c.orange },
-        { icon: (x, y, size) => sparkle(x + size / 2, y + size / 2, size, c.yellow), value: fmt(s.contributions), label: "Contributions", fill: c.blue },
-        { icon: globe, value: fmt(s.repos), label: "Repositories", fill: c.pink },
-        { icon: check, value: fmt(s.pullRequests), label: "Pull requests", fill: c.yellow },
-      ],
+      pills: keys.map((key, i) => ({ icon: PILL_ICONS[i], value: fmt(s[key]), label: STAT[key].pill, fill: PILL_FILLS[i] })),
     }),
     marquee.render(profile.marquee, "poster"),
   ];

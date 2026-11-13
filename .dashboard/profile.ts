@@ -1,8 +1,13 @@
 // Everything specific to one person lives here; components take it as parameters.
+import type { StatKey } from "./src/dashboards";
+
 export const profile = {
   login: "noelruault",
   // "public" counts only repositories and pull requests any visitor could count; "all" adds private ones.
   counts: "public" as "public" | "all",
+  // The four numbers on the tiles and pills, in order.
+  // Swap in any of: contributions, years, activeDays, currentStreak, longestStreak, bestDay, dailyAverage, repos, pullRequests.
+  stats: ["contributions", "years", "activeDays", "currentStreak"] satisfies readonly StatKey[],
   name: "Noël Ruault",
   first: "Noël",
   last: "Ruault",

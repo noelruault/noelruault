@@ -8,7 +8,7 @@ import { docs, posterBoard, readme, today, type Stats } from "./src/dashboards";
 import { fetchStats } from "./src/github";
 
 // Stand-in numbers for working on the design without a token.
-export const SAMPLE: Stats = { contributions: 7880, years: 13, repos: 133, pullRequests: 264, stars: 17, followers: 29 };
+export const SAMPLE: Stats = { contributions: 7880, years: 13, repos: 133, pullRequests: 264, stars: 17, followers: 29, activeDays: 307, currentStreak: 5, longestStreak: 33, bestDay: 161, dailyAverage: 21 };
 
 if (import.meta.main) {
   const { values } = parseArgs({ options: { out: { type: "string", default: "dist" }, sample: { type: "boolean", default: false }, date: { type: "string" } } });

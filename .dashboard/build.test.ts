@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { SAMPLE } from "./build";
-import { docs, posterBoard, readme, today, type Stats } from "./src/dashboards";
-import { fetchStats, fullYears, type Request } from "./src/github";
+import { docs, posterBoard, readme, STAT, today, type StatKey, type Stats } from "./src/dashboards";
+import { activity, fetchStats, fullYears, type Request } from "./src/github";
 import { fits } from "./src/kit";
 
 const day = (iso: string) => new Date(`${iso}T12:00:00Z`);
@@ -64,9 +64,27 @@ test("text wider than its box fails the build", () => {
 });
 
 test("numbers far past today's shrink to fit instead of stopping the daily build", () => {
-  const big: Stats = { contributions: 1_234_567, years: 40, repos: 99_999, pullRequests: 99_999, stars: 99_999, followers: 99_999 };
+  const big: Stats = { contributions: 1_234_567, years: 40, repos: 99_999, pullRequests: 99_999, stars: 99_999, followers: 99_999, activeDays: 366, currentStreak: 12_345, longestStreak: 12_345, bestDay: 99_999, dailyAverage: 9_999 };
   expect(() => [docs(big), posterBoard(big)]).not.toThrow();
   expect(docs(big).rows[1][0].alt).toContain("1,234,567 contributions");
+});
+
+test("streaks, active days, best day and daily average come from the day counts", () => {
+  expect(activity([0, 3, 1, 0, 2, 9, 4])).toEqual({ activeDays: 5, currentStreak: 3, longestStreak: 3, bestDay: 9, dailyAverage: 3 });
+  // Nothing yet today: the streak that reached yesterday still stands.
+  expect(activity([1, 1, 1, 0]).currentStreak).toBe(3);
+  // A gap yesterday ends it, whatever came before.
+  expect(activity([5, 5, 0, 0]).currentStreak).toBe(0);
+  expect(activity([])).toEqual({ activeDays: 0, currentStreak: 0, longestStreak: 0, bestDay: 0, dailyAverage: 0 });
+});
+
+test("every stat in the catalog fits a tile and a pill", () => {
+  const keys = Object.keys(STAT) as StatKey[];
+  for (let i = 0; i < keys.length; i += 4) {
+    const four = [0, 1, 2, 3].map((j) => keys[(i + j) % keys.length]);
+    expect(() => [docs(SAMPLE, four), posterBoard(SAMPLE, four)]).not.toThrow();
+  }
+  expect(() => docs(SAMPLE, ["contributions"])).toThrow("exactly 4 stats");
 });
 
 // Two pages of repositories: three stars on the first, four on the second.
@@ -82,7 +100,7 @@ function fakeGitHub(overrides: { cursorOnPageOne?: string | null } = {}) {
         createdAt: "2013-04-09T12:59:27Z",
         followers: { totalCount: 29 },
         pullRequests: { totalCount: 264 },
-        contributionsCollection: { contributionCalendar: { totalContributions: 7800 } },
+        contributionsCollection: { contributionCalendar: { totalContributions: 7800, weeks: [{ contributionDays: [{ contributionCount: 4 }, { contributionCount: 0 }] }, { contributionDays: [{ contributionCount: 2 }, { contributionCount: 6 }] }] } },
         repositories: {
           totalCount: 101,
           pageInfo: firstPage ? { hasNextPage: true, endCursor: overrides.cursorOnPageOne === undefined ? "c1" : overrides.cursorOnPageOne } : { hasNextPage: false, endCursor: null },
@@ -99,6 +117,7 @@ test("stars are summed across every page of repositories", async () => {
   const { request, sent } = fakeGitHub();
   const stats = await fetchStats("someone", "token", day("2026-11-13"), "all", request);
   expect(stats.stars).toBe(7);
+  expect(stats).toMatchObject({ activeDays: 3, currentStreak: 2, longestStreak: 2, bestDay: 6, dailyAverage: 3 });
   expect(sent.map((s) => s.after)).toEqual([null, "c1"]);
 });
 

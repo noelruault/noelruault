@@ -9,7 +9,7 @@ const QUERY = `query($login: String!, $after: String, $privacy: RepositoryPrivac
     createdAt
     followers { totalCount }
     pullRequests { totalCount }
-    contributionsCollection { contributionCalendar { totalContributions } }
+    contributionsCollection { contributionCalendar { totalContributions weeks { contributionDays { contributionCount } } } }
     repositories(ownerAffiliations: OWNER, isFork: false, privacy: $privacy, first: 100, after: $after) {
       totalCount
       pageInfo { hasNextPage endCursor }
@@ -24,7 +24,7 @@ interface Page {
     createdAt: string;
     followers: { totalCount: number };
     pullRequests: { totalCount: number };
-    contributionsCollection: { contributionCalendar: { totalContributions: number } };
+    contributionsCollection: { contributionCalendar: { totalContributions: number; weeks: { contributionDays: { contributionCount: number }[] }[] } };
     repositories: {
       totalCount: number;
       pageInfo: { hasNextPage: boolean; endCursor: string | null };
@@ -42,6 +42,28 @@ export function fullYears(since: Date, now: Date) {
   const years = now.getUTCFullYear() - since.getUTCFullYear();
   const anniversary = Date.UTC(now.getUTCFullYear(), since.getUTCMonth(), since.getUTCDate());
   return now.getTime() < anniversary ? years - 1 : years;
+}
+
+// `days` is one contribution count per day, oldest first, ending today.
+export function activity(days: readonly number[]) {
+  let longestStreak = 0;
+  let run = 0;
+  for (const count of days) {
+    run = count > 0 ? run + 1 : 0;
+    longestStreak = Math.max(longestStreak, run);
+  }
+  // Today is not over, so an empty today does not break a streak that reached yesterday.
+  const settled = days.at(-1) === 0 ? days.slice(0, -1) : days;
+  let currentStreak = 0;
+  for (let i = settled.length - 1; i >= 0 && settled[i] > 0; i--) currentStreak++;
+  const total = days.reduce((sum, count) => sum + count, 0);
+  return {
+    activeDays: days.filter((count) => count > 0).length,
+    currentStreak,
+    longestStreak,
+    bestDay: Math.max(0, ...days),
+    dailyAverage: days.length ? Math.round(total / days.length) : 0,
+  };
 }
 
 async function page(request: Request, login: string, token: string, visibility: Visibility, after: string | null) {
@@ -90,6 +112,7 @@ export async function fetchStats(login: string, token: string, now: Date, visibi
     pullRequests: all ? first.user.pullRequests.totalCount : first.search.issueCount,
     stars,
     followers: first.user.followers.totalCount,
+    ...activity(contributions.contributionCalendar.weeks.flatMap((week) => week.contributionDays.map((day) => day.contributionCount))),
   };
   // The response is only cast, so a renamed field would otherwise reach a card as "NaN" or "undefined".
   for (const [name, value] of Object.entries(stats)) {
