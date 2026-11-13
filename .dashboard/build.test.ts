@@ -82,7 +82,7 @@ function fakeGitHub(overrides: { cursorOnPageOne?: string | null } = {}) {
         createdAt: "2013-04-09T12:59:27Z",
         followers: { totalCount: 29 },
         pullRequests: { totalCount: 264 },
-        contributionsCollection: { restrictedContributionsCount: 7000, contributionCalendar: { totalContributions: 7800 } },
+        contributionsCollection: { contributionCalendar: { totalContributions: 7800 } },
         repositories: {
           totalCount: 101,
           pageInfo: firstPage ? { hasNextPage: true, endCursor: overrides.cursorOnPageOne === undefined ? "c1" : overrides.cursorOnPageOne } : { hasNextPage: false, endCursor: null },
@@ -102,9 +102,9 @@ test("stars are summed across every page of repositories", async () => {
   expect(sent.map((s) => s.after)).toEqual([null, "c1"]);
 });
 
-test("public counts leave out private contributions, pull requests and repositories", async () => {
+test("public counts leave out private pull requests and repositories, and contributions stay the calendar total", async () => {
   const pub = fakeGitHub();
-  expect(await fetchStats("someone", "token", day("2026-11-13"), "public", pub.request)).toMatchObject({ contributions: 800, pullRequests: 11, years: 13 });
+  expect(await fetchStats("someone", "token", day("2026-11-13"), "public", pub.request)).toMatchObject({ contributions: 7800, pullRequests: 11, years: 13 });
   expect(pub.sent[0].privacy).toBe("PUBLIC");
   const all = fakeGitHub();
   expect(await fetchStats("someone", "token", day("2026-11-13"), "all", all.request)).toMatchObject({ contributions: 7800, pullRequests: 264 });

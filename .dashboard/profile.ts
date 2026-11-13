@@ -1,7 +1,7 @@
 // Everything specific to one person lives here; components take it as parameters.
 export const profile = {
   login: "noelruault",
-  // "public" counts only what any visitor could count; "all" adds private repositories, pull requests and contributions.
+  // "public" counts only repositories and pull requests any visitor could count; "all" adds private ones.
   counts: "public" as "public" | "all",
   name: "Noël Ruault",
   first: "Noël",

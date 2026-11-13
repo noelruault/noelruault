@@ -1,6 +1,6 @@
 import type { Stats } from "./dashboards";
 
-// "public" publishes only what any visitor could count; "all" adds private repositories, pull requests and contributions the token can see.
+// "public" counts only repositories and pull requests any visitor could count; "all" adds the private ones the token can see.
 export type Visibility = "public" | "all";
 
 const QUERY = `query($login: String!, $after: String, $privacy: RepositoryPrivacy, $publicPrs: String!) {
@@ -9,7 +9,7 @@ const QUERY = `query($login: String!, $after: String, $privacy: RepositoryPrivac
     createdAt
     followers { totalCount }
     pullRequests { totalCount }
-    contributionsCollection { restrictedContributionsCount contributionCalendar { totalContributions } }
+    contributionsCollection { contributionCalendar { totalContributions } }
     repositories(ownerAffiliations: OWNER, isFork: false, privacy: $privacy, first: 100, after: $after) {
       totalCount
       pageInfo { hasNextPage endCursor }
@@ -24,7 +24,7 @@ interface Page {
     createdAt: string;
     followers: { totalCount: number };
     pullRequests: { totalCount: number };
-    contributionsCollection: { restrictedContributionsCount: number; contributionCalendar: { totalContributions: number } };
+    contributionsCollection: { contributionCalendar: { totalContributions: number } };
     repositories: {
       totalCount: number;
       pageInfo: { hasNextPage: boolean; endCursor: string | null };
@@ -83,7 +83,8 @@ export async function fetchStats(login: string, token: string, now: Date, visibi
   const contributions = first.user.contributionsCollection;
   const all = visibility === "all";
   const stats: Stats = {
-    contributions: contributions.contributionCalendar.totalContributions - (all ? 0 : contributions.restrictedContributionsCount),
+    // Always the calendar total: it is the figure github.com prints on the profile itself, and subtracting restrictedContributionsCount gave 799 with one token and 6,505 with another.
+    contributions: contributions.contributionCalendar.totalContributions,
     years: fullYears(new Date(first.user.createdAt), now),
     repos: first.user.repositories.totalCount,
     pullRequests: all ? first.user.pullRequests.totalCount : first.search.issueCount,

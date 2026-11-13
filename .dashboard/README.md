@@ -18,7 +18,7 @@ Both end with the same two link buttons.
 
 ## Change things
 
-- Words, links, name: `profile.ts`. Nothing else names a person. Its `counts` setting picks `"public"` numbers (what any visitor could count) or `"all"` (adds private repositories, pull requests and contributions).
+- Words, links, name: `profile.ts`. Nothing else names a person. Its `counts` setting picks `"public"` repository and pull-request numbers (what any visitor could count) or `"all"` (adds private ones). Contributions are always the calendar total github.com prints on the profile.
 - Colours and page width: `theme.ts`.
 - One card: its file in `src/components/`. Each exports `render(params)` and returns a piece (`w`, `h`, `svg`).
 - Which cards a dashboard holds and in what order: `src/dashboards.ts`.
