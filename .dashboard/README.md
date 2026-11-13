@@ -9,6 +9,8 @@ Two neo-brutalist dashboards for a GitHub profile README, drawn as SVG cards fro
 
 Both end with the same two link buttons.
 
+Both are skins over one `Content` struct (`src/dashboards.ts`): name, role, since, site, languages, headline, motto, tagline, four stats, stars, followers, the joke and the marquee. A test fails when either dashboard stops drawing one of those fields, so a visitor is told the same things whichever day it is.
+
 ## Use
 
 1. `bun install`

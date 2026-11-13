@@ -31,5 +31,5 @@ export const profile = {
   motto: ["Simple.", "Efficient.", "Done."],
   stamp: ["Simple", "beats", "clever"],
   cta: "Challenges welcome",
-  error: "Over-engineering not found",
+  error: ["Over-engineering", "not found"],
 } as const;

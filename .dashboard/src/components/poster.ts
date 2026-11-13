@@ -1,6 +1,6 @@
 import { c, CONTENT_W } from "../../theme";
 import { box, rect, rot, text, lines, measure, fits, shrunk, n, type Piece, type TextStyle } from "../kit";
-import { burst, cursor, heart, mascot, sparkle } from "../icons";
+import { burst, cursor, eye, heart, mascot, sparkle } from "../icons";
 
 export interface Pill {
   icon: (x: number, y: number, size: number) => string;
@@ -13,10 +13,18 @@ export interface PosterParams {
   first: string;
   last: string;
   stamp: readonly string[];
+  // Two lines for the banner.
+  headline: readonly string[];
   motto: readonly string[];
   tagline: string;
   cta: string;
   since: string;
+  stars: string;
+  followers: string;
+  // One short word for the black burst.
+  tag: string;
+  // Lines for the mascot's speech bubble.
+  joke: readonly string[];
   pills: readonly Pill[];
 }
 
@@ -34,7 +42,15 @@ function stamp(cx: number, cy: number, r: number, rows: readonly string[]) {
   );
 }
 
-// Bento poster: giant name, info card with a sticker cluster, a sticker panel, a banner, a fact panel and a row of stat pills.
+// White pill holding an icon, a number and what it counts.
+function counter(x: number, y: number, icon: (x: number, y: number, size: number) => string, value: string, label: string) {
+  const w = 152;
+  const style: TextStyle = { size: 11, font: "mono", track: 0.08 };
+  const words = `${value} ${label.toUpperCase()}`;
+  return box(x, y, w, 36, { fill: c.white, r: 18, shadow: 4 }) + icon(x + 11, y + 7, 22) + text(words, x + 42, y + 22, shrunk(words, style, w - 56));
+}
+
+// Bento poster: giant name, info card with a sticker cluster, a mascot panel, a headline banner, a fact panel and a row of stat pills.
 export function render(p: PosterParams): Piece {
   const w = CONTENT_W;
   const inner = w - 2 * PAD;
@@ -57,7 +73,6 @@ export function render(p: PosterParams): Piece {
   const ctaW = measure(p.cta.toUpperCase(), cta) + 30;
   const ruleEnd = right - 318;
   fits(p.tagline, body, ruleEnd - PAD - 20);
-  const hearts = [0, 1, 2, 3, 4].map((i) => heart(right - 296 + i * 29, y2 + 127, 23)).join("");
   const info =
     rect(PAD, y2, inner, infoH, { r: R }) +
     p.motto.map((row, i) => text(row.toUpperCase(), PAD + 20, y2 + 38 + i * 23, { size: 20, font: "display" })).join("") +
@@ -65,38 +80,40 @@ export function render(p: PosterParams): Piece {
     text(p.tagline, PAD + 20, y2 + 126, body) +
     rect(PAD + 20, y2 + 140, ctaW, 30, { r: 15, fill: c.yellow }) +
     text(p.cta.toUpperCase(), PAD + 35, y2 + 159.5, cta) +
-    cursor(right - 290, y2 + 22, 40) +
-    sparkle(right - 200, y2 + 58, 70, c.pink) +
-    box(right - 306, y2 + 118, 170, 40, { fill: c.white, r: 20, shadow: 4 }) +
-    hearts +
-    rot(-10, right - 72, y2 + 88, burst(right - 72, y2 + 88, 56, c.ink) + text("GO", right - 72, y2 + 97, { size: 24, font: "display", fill: c.white, anchor: "middle" })) +
-    sparkle(right - 140, y2 + 30, 30, c.white);
+    cursor(right - 292, y2 + 16, 38) +
+    sparkle(right - 198, y2 + 46, 58, c.pink) +
+    counter(right - 306, y2 + 88, heart, p.stars, "Stars") +
+    counter(right - 306, y2 + 134, eye, p.followers, "Followers") +
+    rot(-10, right - 72, y2 + 92, burst(right - 72, y2 + 92, 56, c.ink) + text(p.tag.toUpperCase(), right - 72, y2 + 101, { size: 24, font: "display", fill: c.white, anchor: "middle" })) +
+    sparkle(right - 142, y2 + 28, 30, c.white);
 
   const y3 = y2 + infoH + 16;
   const h3 = 214;
   const bigW = 500;
   const tagStyle: TextStyle = { size: 18, font: "display" };
   const tagW = measure("NO MAGIC", tagStyle) + 32;
+  const joke: TextStyle = { size: 14, font: "bold" };
+  const bubbleX = PAD + 336;
+  const bubbleW = 150;
+  p.joke.forEach((row) => fits(row, joke, bubbleW - 20));
   const panel =
     rect(PAD, y3, bigW, h3, { r: R, fill: c.pink }) +
     rot(-10, PAD + 78, y3 + 76, burst(PAD + 78, y3 + 76, 58, c.blue) + lines(["LET'S", "BUILD"], PAD + 78, y3 + 76, 19, { size: 17, font: "display" })) +
-    mascot(PAD + 168, y3 + 22, 172) +
-    rot(
-      -6,
-      PAD + 408,
-      y3 + 70,
-      `<ellipse cx="${PAD + 408}" cy="${y3 + 70}" rx="76" ry="38" fill="${c.yellow}" stroke="${c.ink}" stroke-width="3"/><ellipse cx="${PAD + 408}" cy="${y3 + 70}" rx="68" ry="30" fill="${c.blue}" stroke="${c.ink}" stroke-width="3"/>` +
-        text("SHIP IT!", PAD + 408, y3 + 78, { size: 22, font: "display", fill: c.white, anchor: "middle", stroke: c.ink, sw: 3 }),
-    ) +
+    mascot(PAD + 160, y3 + 22, 172) +
+    box(bubbleX, y3 + 30, bubbleW, 62, { fill: c.white, r: 14, shadow: 4 }) +
+    `<path d="M${bubbleX + 2} ${y3 + 66}l-14 14l14 -2" fill="${c.white}" stroke="${c.ink}" stroke-width="3" stroke-linejoin="round"/>` +
+    // Paints over the bubble's border where the tail joins it.
+    `<rect x="${bubbleX - 1}" y="${y3 + 68}" width="5" height="9" fill="${c.white}"/>` +
+    lines(p.joke, bubbleX + bubbleW / 2, y3 + 61, 19, joke) +
     rot(-4, PAD + 410, y3 + 160, box(PAD + 410 - tagW / 2, y3 + 140, tagW, 40, { fill: c.yellow, r: 14, shadow: 4 }) + text("NO MAGIC", PAD + 410, y3 + 166.5, { ...tagStyle, anchor: "middle" }));
 
   const sideX = PAD + bigW + 16;
   const sideW = inner - bigW - 16;
+  const banner: TextStyle = { size: 21, font: "display" };
   const side =
     rect(sideX, y3, sideW, 88, { r: R, fill: c.teal }) +
-    text("STAY", sideX + 18, y3 + 40, { size: 27, font: "display" }) +
-    text("SIMPLE", sideX + 18, y3 + 68, { size: 27, font: "display" }) +
-    sparkle(sideX + sideW - 44, y3 + 44, 50, c.yellow) +
+    p.headline.map((row, i) => text(row.toUpperCase(), sideX + 16, y3 + 38 + i * 26, shrunk(row.toUpperCase(), banner, sideW - 32 - 44))).join("") +
+    sparkle(sideX + sideW - 32, y3 + 44, 40, c.yellow) +
     rect(sideX, y3 + 104, sideW, h3 - 104, { r: R, fill: c.orange }) +
     text("SINCE", sideX + 18, y3 + 138, { size: 20, font: "display" }) +
     text(p.since, sideX + 15, y3 + 196, { size: 62, font: "display", track: -0.02 });

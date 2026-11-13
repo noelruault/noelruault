@@ -1,8 +1,8 @@
 import { expect, test } from "bun:test";
 import { SAMPLE } from "./build";
-import { docs, posterBoard, readme, STAT, today, type StatKey, type Stats } from "./src/dashboards";
+import { content, docs, posterBoard, readme, STAT, today, type StatKey, type Stats } from "./src/dashboards";
 import { activity, fetchStats, fullYears, type Request } from "./src/github";
-import { fits } from "./src/kit";
+import { drawnBy, fits } from "./src/kit";
 
 const day = (iso: string) => new Date(`${iso}T12:00:00Z`);
 const cards = [...docs(SAMPLE).rows.flat(), ...posterBoard(SAMPLE).rows.flat()];
@@ -44,9 +44,19 @@ test("every card is a self-contained SVG that GitHub's image sandbox accepts", (
 
 test("stats reach the accessible label, since the picture itself holds no text", () => {
   const main = docs(SAMPLE).rows[1][0];
-  expect(main.svg).toContain('aria-label="Keep it simple.');
+  expect(main.svg).toContain('aria-label="Noël Ruault, software engineer, since 1993. Keep it simple.');
   expect(main.alt).toContain("7,880 contributions in the last year");
   expect(main.alt).toContain("17 stars, 29 followers");
+});
+
+test("both dashboards draw every field of the shared content", () => {
+  const k = content(SAMPLE);
+  const fields = [k.first, k.last, k.role, k.since, k.site, ...k.languages, ...k.headline, ...k.motto, ...k.tagline, ...k.stats.map((s) => s.value), k.stars, k.followers, ...k.joke, ...k.marquee];
+  for (const board of [docs, posterBoard]) {
+    const drawn = drawnBy(() => board(SAMPLE)).join(" | ").toLowerCase();
+    for (const field of fields) expect(`${board.name} draws "${field}": ${drawn.includes(field.toLowerCase())}`).toBe(`${board.name} draws "${field}": true`);
+  }
+  expect(docs(SAMPLE).rows[1][0].alt).toBe(posterBoard(SAMPLE).rows[1][0].alt);
 });
 
 test("the README links every card of the day's dashboard", () => {

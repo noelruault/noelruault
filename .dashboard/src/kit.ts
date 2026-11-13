@@ -74,8 +74,22 @@ function outline(s: string, { size, font = "bold", track = 0 }: TextStyle) {
 
 export const measure = (s: string, style: TextStyle) => outline(s, style).w;
 
+let drawn: string[] | null = null;
+
+// The output holds outlines, not text, so tests ask which strings were drawn while `render` ran.
+export function drawnBy(render: () => unknown) {
+  drawn = [];
+  try {
+    render();
+    return drawn;
+  } finally {
+    drawn = null;
+  }
+}
+
 // y is the baseline.
 export function text(s: string, x: number, y: number, style: TextStyle) {
+  drawn?.push(s);
   const { d, w } = outline(s, style);
   const dx = style.anchor === "middle" ? x - w / 2 : style.anchor === "end" ? x - w : x;
   const stroke = style.stroke

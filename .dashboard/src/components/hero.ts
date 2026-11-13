@@ -4,6 +4,7 @@ import { box, chip, at, rot, rect, text, fits, measure, type Piece, type TextSty
 export interface HeroParams {
   role: string;
   shout: readonly string[];
+  motto: readonly string[];
   tagline: readonly string[];
   tag: string;
   // [prompt, text] rows; an empty prompt is program output.
@@ -29,6 +30,8 @@ export function render(p: HeroParams): Piece {
   y += p.shout.length * 70 + 14;
   copy += box(pad, y, 96, 14, { fill: c.yellow, shadow: 4 });
   y += 14 + 26;
+  copy += text(p.motto.join(" ").toUpperCase(), pad, y + 12, { size: 15, font: "display", track: 0.02 });
+  y += 28;
   p.tagline.forEach((row, i) => (copy += text(row, pad, y + 14 + i * 24, { size: 16, font: "bold" })));
   const h = y + p.tagline.length * 24 + pad - 4;
 

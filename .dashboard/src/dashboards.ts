@@ -50,11 +50,26 @@ export const STAT: Record<StatKey, StatView> = {
   pullRequests: { tile: ["Pull requests"], pill: "Pull requests", phrase: "pull requests" },
 };
 
-// The tile row and the pill row are both laid out for four.
-const SLOTS = 4;
-function four(keys: readonly StatKey[]) {
-  if (keys.length !== SLOTS) throw new Error(`a dashboard shows exactly ${SLOTS} stats, got ${keys.length}: ${keys.join(", ")}`);
-  return keys;
+// What a visitor is told, whichever dashboard is up.
+// Both dashboards are skins over this one struct: a field added here has to be drawn by both, and build.test.ts fails when either drops one.
+export interface Content {
+  name: string;
+  first: string;
+  last: string;
+  initials: string;
+  role: string;
+  since: string;
+  site: string;
+  languages: readonly string[];
+  headline: readonly string[];
+  motto: readonly string[];
+  tagline: readonly string[];
+  terminal: readonly (readonly [string, string])[];
+  stats: readonly { key: StatKey; value: string }[];
+  stars: string;
+  followers: string;
+  joke: readonly string[];
+  marquee: readonly string[];
 }
 
 export interface Card {
@@ -74,8 +89,37 @@ export interface Dashboard {
 const fmt = (v: number) => v.toLocaleString("en-US");
 const sheet = { w: PAGE_W, pad: PAD, shadowMax: SHADOW_MAX };
 
-const summary = (s: Stats, keys: readonly StatKey[]) =>
-  `${keys.map((key) => `${fmt(s[key])} ${STAT[key].phrase}`).join(", ")}, ${fmt(s.stars)} stars, ${fmt(s.followers)} followers.`;
+// The tile row and the pill row are both laid out for four.
+const SLOTS = 4;
+
+export function content(s: Stats, keys: readonly StatKey[] = profile.stats): Content {
+  if (keys.length !== SLOTS) throw new Error(`a dashboard shows exactly ${SLOTS} stats, got ${keys.length}: ${keys.join(", ")}`);
+  return {
+    name: profile.name,
+    first: profile.first,
+    last: profile.last,
+    initials: profile.initials,
+    role: profile.role,
+    since: profile.since,
+    site: profile.site.label,
+    languages: profile.languages,
+    headline: profile.shout,
+    motto: profile.motto,
+    tagline: profile.tagline,
+    terminal: profile.terminal,
+    stats: keys.map((key) => ({ key, value: fmt(s[key]) })),
+    stars: fmt(s.stars),
+    followers: fmt(s.followers),
+    joke: profile.error,
+    marquee: profile.marquee,
+  };
+}
+
+// One description for both dashboards, since they say the same things.
+const describe = (k: Content) =>
+  `${k.name}, ${k.role.toLowerCase()}, since ${k.since}. ${k.headline.join(" ")} ${k.motto.join(" ")} ${k.tagline.join(" ")} ` +
+  `${k.stats.map((stat) => `${stat.value} ${STAT[stat.key].phrase}`).join(", ")}, ${k.stars} stars, ${k.followers} followers. ` +
+  `${k.languages.join(", ")}. ${k.joke.join(" ")}.`;
 
 const TILE_FILLS = [c.yellow, c.mint, c.pink, c.violet];
 const PILL_FILLS = [c.orange, c.blue, c.pink, c.yellow];
@@ -95,56 +139,62 @@ function sideBySide(left: Piece, right: Piece, x: number): Piece {
   return { w: CONTENT_W, h, svg: at(0, (h - left.h) / 2, left.svg) + at(x, (h - right.h) / 2, right.svg) };
 }
 
-export function docs(s: Stats, keys: readonly StatKey[] = profile.stats): Dashboard {
-  four(keys);
-  const navAlt = `${profile.name}, ${profile.role.toLowerCase()}. Since ${profile.since}. ${profile.site.label}`;
-  const stat = bubbles.render([
-    { icon: heart, value: fmt(s.stars), label: "Stars" },
-    { icon: eye, value: fmt(s.followers), label: "Followers" },
+const navAlt = (k: Content) => `${k.name}, ${k.role.toLowerCase()}. ${k.languages.join(", ")}. Since ${k.since}. ${k.site}`;
+
+function renderDocs(k: Content): Dashboard {
+  const social = bubbles.render([
+    { icon: heart, value: k.stars, label: "Stars" },
+    { icon: eye, value: k.followers, label: "Followers" },
   ]);
   const gap = 26;
   const main = [
-    hero.render({ role: profile.role, shout: profile.shout, tagline: profile.tagline, tag: profile.languages[0], terminal: profile.terminal }),
-    tiles.render(keys.map((key, i) => ({ value: fmt(s[key]), label: STAT[key].tile, fill: TILE_FILLS[i] }))),
-    sideBySide(stat, dialog.render({ title: "Error", message: profile.error, button: "OK", w: CONTENT_W - stat.w - gap }), stat.w + gap),
-    marquee.render(profile.marquee, "docs"),
+    hero.render({ role: k.role, shout: k.headline, motto: k.motto, tagline: k.tagline, tag: k.languages[0], terminal: k.terminal }),
+    tiles.render(k.stats.map((stat, i) => ({ value: stat.value, label: STAT[stat.key].tile, fill: TILE_FILLS[i] }))),
+    sideBySide(social, dialog.render({ title: "Error", message: k.joke.join(" "), button: "OK", w: CONTENT_W - social.w - gap }), social.w + gap),
+    marquee.render(k.marquee, "docs"),
   ];
+  const top = nav.render({ name: k.name, initials: k.initials, role: k.role, languages: k.languages, since: k.since, site: k.site });
   return {
     id: "docs",
     rows: [
-      [{ file: "docs-nav.svg", svg: page("docs-nav", navAlt, [nav.render({ name: profile.name, initials: profile.initials, role: profile.role, since: profile.since, site: profile.site.label })], sheet), alt: navAlt, href: profile.site.url }],
-      [{ file: "docs-main.svg", svg: page("docs-main", `${profile.shout.join(" ")} ${profile.tagline.join(" ")} ${summary(s, keys)}`, main, { ...sheet, gap }), alt: `${profile.shout.join(" ")} ${profile.tagline.join(" ")} ${summary(s, keys)}` }],
+      [{ file: "docs-nav.svg", svg: page("docs-nav", navAlt(k), [top], sheet), alt: navAlt(k), href: profile.site.url }],
+      [{ file: "docs-main.svg", svg: page("docs-main", describe(k), main, { ...sheet, gap }), alt: describe(k) }],
       buttons(),
     ],
   };
 }
 
-export function posterBoard(s: Stats, keys: readonly StatKey[] = profile.stats): Dashboard {
-  four(keys);
-  const navAlt = `${profile.languages.join(", ")}. Contact: ${profile.site.label}`;
-  const mainAlt = `${profile.name}. ${profile.motto.join(" ")} ${profile.tagline.join(" ")} ${summary(s, keys)}`;
+function renderPoster(k: Content): Dashboard {
   const main = [
     poster.render({
-      first: profile.first,
-      last: profile.last,
+      first: k.first,
+      last: k.last,
       stamp: profile.stamp,
-      motto: profile.motto,
-      tagline: profile.tagline.join(" "),
+      headline: [k.headline.slice(0, 2).join(" "), k.headline.slice(2).join(" ")],
+      motto: k.motto,
+      tagline: k.tagline.join(" "),
       cta: profile.cta,
-      since: profile.since,
-      pills: keys.map((key, i) => ({ icon: PILL_ICONS[i], value: fmt(s[key]), label: STAT[key].pill, fill: PILL_FILLS[i] })),
+      since: k.since,
+      stars: k.stars,
+      followers: k.followers,
+      tag: k.languages[0],
+      joke: k.joke,
+      pills: k.stats.map((stat, i) => ({ icon: PILL_ICONS[i], value: stat.value, label: STAT[stat.key].pill, fill: PILL_FILLS[i] })),
     }),
-    marquee.render(profile.marquee, "poster"),
+    marquee.render(k.marquee, "poster"),
   ];
   return {
     id: "poster",
     rows: [
-      [{ file: "poster-nav.svg", svg: page("poster-nav", navAlt, [pillnav.render(profile.languages, "Contact")], { ...sheet, r: 22 }), alt: navAlt, href: profile.site.url }],
-      [{ file: "poster-main.svg", svg: page("poster-main", mainAlt, main, { ...sheet, r: 22 }), alt: mainAlt }],
+      [{ file: "poster-nav.svg", svg: page("poster-nav", navAlt(k), [pillnav.render(k.role, k.languages, k.site)], { ...sheet, r: 22 }), alt: navAlt(k), href: profile.site.url }],
+      [{ file: "poster-main.svg", svg: page("poster-main", describe(k), main, { ...sheet, r: 22 }), alt: describe(k) }],
       buttons(),
     ],
   };
 }
+
+export const docs = (s: Stats, keys?: readonly StatKey[]) => renderDocs(content(s, keys));
+export const posterBoard = (s: Stats, keys?: readonly StatKey[]) => renderPoster(content(s, keys));
 
 const DAY_MS = 86_400_000;
 
